@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IPO Checklist Upload</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background-color: #f9f9f9;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    form {
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 900px;
+      margin: 0 auto 40px auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="file"] {
+      width: 100%;
+    }
+
+    .view-link {
+      font-size: 13px;
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .view-link:hover {
+      text-decoration: underline;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: #eee;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 15px;
+      height: 16px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background-color: #28a745;
+      transition: width 0.3s ease-in-out;
+    }
+
+    .status {
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  
+  <h2>Welcome {{ user.username }} | <a href="{% url 'logout' %}">Logout</a></h2>
+  <h2>Upload All IPO Checklist Documents</h2>
+
+  <form id="uploadForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <table>
+      <thead>
+        <tr>
+          <th>Document Field</th>
+          <th>Upload</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for field in form.visible_fields %}
+          <tr>
+            <td><label>{{ field.label }}</label></td>
+            <td>{{ field }}</td>
+            <td>
+              {% if field.value and field.value.url %}
+                <a href="{{ field.value.url }}" class="view-link" target="_blank">View Uploaded</a>
+              {% else %}
+                <span style="color: red;">Pending</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p class="status" id="uploadStatus"></p>
+
+    <button type="submit">Upload All Documents</button>
+  </form>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const progressFill = document.getElementById('progressFill');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const xhr = new XMLHttpRequest();
+
+      xhr.upload.addEventListener('progress', function (e) {
+        if (e.lengthComputable) {
+          const percent = (e.loaded / e.total) * 100;
+          progressFill.style.width = percent + "%";
+        }
+      });
+
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          uploadStatus.innerText = "✅ Upload successful!";
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          uploadStatus.innerText = "❌ Upload failed.";
+        }
+      };
+
+      xhr.onerror = function () {
+        uploadStatus.innerText = "❌ Network error during upload.";
+      };
+
+      xhr.open('POST', '', true);
+      xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+      xhr.send(formData);
+    });
+  </script>
+
+</body>
+</html>

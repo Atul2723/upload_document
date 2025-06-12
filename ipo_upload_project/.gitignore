@@ -1,0 +1,16 @@
+# Byte-compiled / virtual environment / database
+*.pyc
+__pycache__/
+db.sqlite3
+*.sqlite3
+
+# Media uploads
+/media/
+
+# Static files
+/staticfiles/
+
+# Environment
+.env
+venv/
+ENV/

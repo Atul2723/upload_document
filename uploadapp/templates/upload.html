@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Document Upload</title>
+  <style>
+    body { font-family: Arial; padding: 30px; max-width: 900px; margin: auto; }
+    .doc-form { border: 1px solid #ccc; padding: 20px; border-radius: 6px; margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; }
+    select, input[type="file"], button {
+      padding: 8px;
+      margin-top: 5px;
+      width: 100%;
+      font-size: 14px;
+    }
+    .progress-bar { width: 100%; background: #f0f0f0; margin-top: 10px; }
+    .progress-fill { height: 16px; width: 0%; background: #28a745; transition: 0.3s; }
+    .uploaded { color: green; font-weight: bold; }
+    .pending { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<h2>Welcome {{ user.username }}</h2>
+<a href="{% url 'logout' %}">Logout</a>
+
+<div class="doc-form">
+  <h3>Upload Document</h3>
+  <form id="uploadForm">
+    {% csrf_token %}
+    <label for="field_name">Select Document Type:</label>
+    <select name="field_name" required>
+      {% for field in all_fields %}
+        <option value="{{ field }}" {% if field in uploaded_fields %}disabled{% endif %}>
+          {{ field|capfirst }} {% if field in uploaded_fields %}(Uploaded){% endif %}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="file">Choose File:</label>
+    <input type="file" name="file" required />
+
+    <button type="submit">Upload</button>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p id="uploadStatus"></p>
+  </form>
+</div>
+
+<h3>Uploaded Documents</h3>
+<ul>
+  {% for doc in uploaded_docs %}
+    <li><span class="uploaded">{{ doc.field_name }}</span> - <a href="{{ doc.file.url }}" download>Download</a></li>
+  {% endfor %}
+</ul>
+
+<h3>Pending Documents</h3>
+<ul>
+  {% for field in all_fields %}
+    {% if field not in uploaded_fields %}
+      <li><span class="pending">{{ field }}</span></li>
+    {% endif %}
+  {% endfor %}
+</ul>
+
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  const xhr = new XMLHttpRequest();
+
+  xhr.upload.addEventListener('progress', function(e) {
+    if (e.lengthComputable) {
+      const percent = (e.loaded / e.total) * 100;
+      document.getElementById('progressFill').style.width = percent + '%';
+    }
+  });
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4) {
+      const res = JSON.parse(xhr.responseText);
+      document.getElementById('uploadStatus').innerText = res.message || res.error || '';
+      if (xhr.status === 200) {
+        setTimeout(() => window.location.reload(), 500);
+      }
+    }
+  };
+
+  xhr.open('POST', '', true);
+  xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+  xhr.send(formData);
+});
+</script>
+
+</body>
+</html>
