@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ipo-upload
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn ipo_upload_project.wsgi --log-file -"
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: ipo_upload_project.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
